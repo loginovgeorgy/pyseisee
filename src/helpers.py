@@ -50,7 +50,7 @@ def cast_input_to_trace(x):
 def insert_zeros_in_trace(trace):
     trace = cast_input_to_trace(trace) + 1e-16
 
-    time = np.arange(len(trace))
+    time = np.arange(len(trace)).astype(float)
     zero_idx = np.where(np.diff(np.signbit(trace)))[0]
 
     time_at_zero = time[zero_idx] - trace[zero_idx] / np.diff(trace)[zero_idx]

@@ -40,7 +40,6 @@ class PGather:
         self.fig = ax.get_figure()
         self.ax = ax
 
-        # s_gain_axs = plt.axes()
         self.s_gain_axs = self.fig.add_axes([0.13, 0.02, 0.75, 0.03])
         self.s_gain = Slider(self.s_gain_axs, 'gain', 0, 10, valinit=1, valfmt='%d')
         self.s_gain.on_changed(lambda x: self.update(gain=x))
@@ -205,32 +204,34 @@ class PGather:
 
             for jc in range(traces.shape[2]):
                 trace = traces[jt, :, jc]
-                if any(fill_positive.values()) | any(fill_negative.values()):
-                    trace, time = insert_zeros_in_trace(trace)
-                    time = time * dt
 
-                trace /= (traces.shape[2] * dist_for_3c)
                 shift = .5 + (jc - traces.shape[2]) / (traces.shape[2] + 1)
                 shift *= dist_for_3c
                 shift += off
 
-                if any(fill_positive.values()):
-                    vertices = [list(zip(time + self.start_time, trace * (trace >= 0) + shift))]
-                    self.plt_area_pos[jt] = PolyCollection(
-                        vertices,
-                        alpha=alpha,
-                        facecolor=fill_positive[jc],
-                    )
-                    ax.add_collection(self.plt_area_pos[jt])
+                trace /= (traces.shape[2] * dist_for_3c)
 
-                if any(fill_negative.values()):
-                    vertices = [list(zip(time + self.start_time, trace * (trace <= 0) + shift))]
-                    self.plt_area_neg[jt] = PolyCollection(
-                        vertices,
-                        alpha=alpha,
-                        facecolor=fill_negative[jc],
-                    )
-                    ax.add_collection(self.plt_area_pos[jt])
+                if any(fill_positive.values()) | any(fill_negative.values()):
+                    trace_w, time_w = insert_zeros_in_trace(trace)
+                    time_w = time_w * dt
+
+                    if any(fill_positive.values()):
+                        vertices = [list(zip(time_w + self.start_time, trace_w * (trace_w >= 0) + shift))]
+                        self.plt_area_pos[jt] = PolyCollection(
+                            vertices,
+                            alpha=alpha,
+                            facecolor=fill_positive[jc],
+                        )
+                        ax.add_collection(self.plt_area_pos[jt])
+
+                    if any(fill_negative.values()):
+                        vertices = [list(zip(time_w + self.start_time, trace_w * (trace_w <= 0) + shift))]
+                        self.plt_area_neg[jt] = PolyCollection(
+                            vertices,
+                            alpha=alpha,
+                            facecolor=fill_negative[jc],
+                        )
+                        ax.add_collection(self.plt_area_pos[jt])
 
                 x, y = _get_x_y([time + start_time, trace + shift])
                 self.plt_line[jt] = ax.plot(x, y, color=trace_color[jc])[0]
@@ -371,23 +372,22 @@ class PGather:
 
             for jc in range(traces.shape[2]):
                 trace = traces[jt, :, jc]
-
-                if any(self.fill_positive.values()) | any(self.fill_negative.values()):
-                    trace, time = insert_zeros_in_trace(trace)
-                    time = time * self.dt
-
                 trace /= (traces.shape[2] * self.dist_for_3c)
                 shift = .5 + (jc - traces.shape[2]) / (traces.shape[2] + 1)
                 shift *= self.dist_for_3c
                 shift += off
 
-                if any(self.fill_positive.values()):
-                    vertices = [list(zip(time + self.start_time, trace * (trace >= 0) + shift))]
-                    self.plt_area_pos[jt].set_verts(vertices)
+                if any(self.fill_positive.values()) | any(self.fill_negative.values()):
+                    trace_w, time_w = insert_zeros_in_trace(trace)
+                    time_w = time_w * self.dt
 
-                if any(self.fill_negative.values()):
-                    vertices = [list(zip(time + self.start_time, trace * (trace <= 0) + shift))]
-                    self.plt_area_neg[jt].set_verts(vertices)
+                    if any(self.fill_positive.values()):
+                        vertices = [list(zip(time_w + self.start_time, trace_w * (trace_w >= 0) + shift))]
+                        self.plt_area_pos[jt].set_verts(vertices)
+
+                    if any(self.fill_negative.values()):
+                        vertices = [list(zip(time_w + self.start_time, trace_w * (trace_w <= 0) + shift))]
+                        self.plt_area_neg[jt].set_verts(vertices)
 
                 _, y = self._get_x_y([time + self.start_time, trace + shift])
                 self.plt_line[jt].set_ydata(y)
